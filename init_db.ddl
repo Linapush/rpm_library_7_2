@@ -2,13 +2,13 @@ CREATE SCHEMA IF NOT EXISTS library;
 
 CREATE EXTENSION "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS library.book (id uuid primary key default uuid_generate_v4(), title TEXT NOT NULL, description TEXT, volume integer, age_limit integer, creation_date DATE, type TEXT NOT NULL, created timestamp with time zone default CURRENT_TIMESTAMP, modified timestamp with time zone default CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS library.book (id uuid primary key default uuid_generate_v4(), title TEXT NOT NULL, description TEXT, volume integer, age_limit integer, year INT, type TEXT NOT NULL, created timestamp with time zone default CURRENT_TIMESTAMP, modified timestamp with time zone default CURRENT_TIMESTAMP);
 
 SET search_path TO public,library;
 
-INSERT INTO library.book (title, type, creation_date) SELECT 'some book name', case when RANDOM() < 0.3 THEN 'journal' ELSE 'book' END, date::DATE FROM generate_series('1900-01-01'::DATE, '2023-01-01'::DATE, '1 hour'::interval) date;
+INSERT INTO library.book (title, type, year) SELECT 'some book name', case when RANDOM() < 0.3 THEN 'journal' ELSE 'book' END, generate_series(0, 2023);
 
-CREATE INDEX book_creation_date_idx ON library.book(creation_date);
+CREATE INDEX book_creation_date_idx ON library.book(year);
 
 CREATE TABLE IF NOT EXISTS library.author (id uuid primary key default uuid_generate_v4(), full_name text not null, created timestamp with time zone default CURRENT_TIMESTAMP, modified timestamp with time zone default CURRENT_TIMESTAMP);
 
