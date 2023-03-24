@@ -1,9 +1,8 @@
 from pathlib import Path
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, path
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -42,7 +41,7 @@ ROOT_URLCONF = 'library.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -57,7 +56,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'library.wsgi.application'
 
-load_dotenv() #########
+load_dotenv()
 
 DATABASES = {
     'default': {
