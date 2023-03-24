@@ -37,6 +37,17 @@ def catalog_view(cls_model, context_name, template):
 
     return CustomListView
 
+def entity_view(cls_model, name, template):
+    def view(request):
+        return render(
+            request,
+            template,
+            context={
+                name: cls_model.objects.get(id=request.GET.get('id', ''))
+            }
+        )
+    return view
+
 CATALOG = 'catalog'
 BOOKS_CATALOG = f'{CATALOG}/books.html'
 AUTHORS_CATALOG = f'{CATALOG}/authors.html'
@@ -45,3 +56,12 @@ GENRES_CATALOG = f'{CATALOG}/genres.html'
 BookListView = catalog_view(Book, 'books', BOOKS_CATALOG)
 AuthorListView = catalog_view(Author, 'authors', AUTHORS_CATALOG)
 GenreListView = catalog_view(Genre, 'genres', GENRES_CATALOG)
+
+ENTITIES = 'entities'
+BOOK_ENTITY = f'{ENTITIES}/book.html'
+AUTHOR_ENTITY = f'{ENTITIES}/author.html'
+GENRE_ENTITY = f'{ENTITIES}/genre.html'
+
+book_view = entity_view(Book, 'book', BOOK_ENTITY)
+genre_view = entity_view(Genre, 'genre', GENRE_ENTITY)
+author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
