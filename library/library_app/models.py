@@ -2,6 +2,7 @@ from django.db import models
 from uuid import uuid4
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from django.utils.translation import gettext_lazy as _
 
 
 class UUIDMixin(models.Model):
@@ -11,26 +12,28 @@ class UUIDMixin(models.Model):
         abstract = True
 
 class CreatedMixin(models.Model):
-    created = models.DateTimeField(blank=True, null=True)
+    created = models.DateTimeField(_('created'), blank=True, null=True)
 
     class Meta:
         abstract = True
 
 class ModifiedMixin(models.Model):
-    modified = models.DateTimeField(blank=True, null=True)
+    modified = models.DateTimeField(_('modified'), blank=True, null=True)
 
     class Meta:
         abstract = True
 
 class Author(UUIDMixin, CreatedMixin, ModifiedMixin):
-    full_name = models.CharField(max_length=40)
-    books = models.ManyToManyField('Book', through='BookAuthor')
+    full_name = models.CharField(_('full name'), max_length=40)
+    books = models.ManyToManyField('Book', verbose_name=_('books'), through='BookAuthor')
 
     def __str__(self):
         return self.full_name
 
     class Meta:
         db_table = 'author'
+        verbose_name = _('author')
+        verbose_name_plural = _('authors')
 
 def positive_int(num: int):
     if num <= 0:
@@ -48,25 +51,27 @@ def year_validator(year: int):
         )
 
 book_types = (
-    ('book', 'book'),
-    ('journal', 'journal')
+    ('book', _('book')),
+    ('journal', _('journal'))
 )
 
 class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
-    title = models.CharField(max_length=40)
-    description = models.TextField(blank=True, null=True)
-    volume = models.IntegerField(blank=True, null=True, validators=[positive_int])
-    age_limit = models.IntegerField(blank=True, null=True, validators=[positive_int])
-    year = models.IntegerField(blank=True, null=True, validators=[year_validator])
-    type = models.CharField(max_length=20, choices=book_types, blank=False, null=False)
-    authors = models.ManyToManyField(Author, through='BookAuthor')
-    genres = models.ManyToManyField('Genre', through='BookGenre')
+    title = models.CharField(_('title'), max_length=40)
+    description = models.TextField(_('description'), blank=True, null=True)
+    volume = models.IntegerField(_('volume'), blank=True, null=True, validators=[positive_int])
+    age_limit = models.IntegerField(_('age limit'), blank=True, null=True, validators=[positive_int])
+    year = models.IntegerField(_('year'), blank=True, null=True, validators=[year_validator])
+    type = models.CharField(_('type'), max_length=20, choices=book_types, blank=False, null=False)
+    authors = models.ManyToManyField(Author, verbose_name=_('authors'), through='BookAuthor')
+    genres = models.ManyToManyField('Genre', verbose_name=_('genres'), through='BookGenre')
 
     def __str__(self):
         return f'{self.title}, {self.type}, {self.year}'
 
     class Meta:
         db_table = 'book'
+        verbose_name = _('book')
+        verbose_name_plural = _('books')
 
 
 class BookAuthor(UUIDMixin, CreatedMixin):
@@ -79,14 +84,16 @@ class BookAuthor(UUIDMixin, CreatedMixin):
 
 
 class Genre(UUIDMixin, CreatedMixin, ModifiedMixin):
-    name = models.CharField(max_length=30)
-    description = models.TextField(blank=True, null=True)
+    name = models.CharField(_('name'), max_length=30)
+    description = models.TextField(_('description'), blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
         db_table = 'genre'
+        verbose_name = _('genre')
+        verbose_name_plural = _('genres')
 
 class BookGenre(UUIDMixin, CreatedMixin):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
