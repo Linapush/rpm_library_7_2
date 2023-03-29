@@ -4,6 +4,7 @@ from django.views.generic import ListView
 from django.core.paginator import Paginator
 from rest_framework.viewsets import ModelViewSet
 from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
+from rest_framework.permissions import BasePermission, IsAuthenticated
 
 
 PAGINATOR_THRESHOLD = 20
@@ -67,10 +68,20 @@ book_view = entity_view(Book, 'book', BOOK_ENTITY)
 genre_view = entity_view(Genre, 'genre', GENRE_ENTITY)
 author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
 
+
+class Permission(BasePermission):
+    def has_permission(self, request, _):
+        if request.method == 'GET':
+            return bool(request.user and request.user.is_authenticated)
+        elif request.method == 'POST' or request.method == 'DELETE':
+            return bool(request.user and request.user.is_superuser)
+        return False
+
 def create_viewset(cls_model, serializer, order_field):
     class CustomViewSet(ModelViewSet):
         queryset = cls_model.objects.all()
         serializer_class = serializer
+        permission_classes = [Permission]
 
         def get_queryset(self):
             queryset = cls_model.objects.all()
