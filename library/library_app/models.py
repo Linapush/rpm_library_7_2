@@ -3,6 +3,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.translation import gettext_lazy as _
+from datetime import datetime
 
 
 class UUIDMixin(models.Model):
@@ -12,13 +13,13 @@ class UUIDMixin(models.Model):
         abstract = True
 
 class CreatedMixin(models.Model):
-    created = models.DateTimeField(_('created'), blank=True, null=True)
+    created = models.DateTimeField(_('created'), default=datetime.now, blank=True, null=False)
 
     class Meta:
         abstract = True
 
 class ModifiedMixin(models.Model):
-    modified = models.DateTimeField(_('modified'), blank=True, null=True)
+    modified = models.DateTimeField(_('modified'), default=datetime.now, blank=True, null=False)
 
     class Meta:
         abstract = True
@@ -31,7 +32,7 @@ class Author(UUIDMixin, CreatedMixin, ModifiedMixin):
         return self.full_name
 
     class Meta:
-        db_table = 'author'
+        db_table = '"library"."author"'
         verbose_name = _('author')
         verbose_name_plural = _('authors')
 
@@ -69,7 +70,7 @@ class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
         return f'{self.title}, {self.type}, {self.year}'
 
     class Meta:
-        db_table = 'book'
+        db_table = '"library"."book"'
         verbose_name = _('book')
         verbose_name_plural = _('books')
 
@@ -79,7 +80,7 @@ class BookAuthor(UUIDMixin, CreatedMixin):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
 
     class Meta:
-        db_table = 'book_author'
+        db_table = '"library"."book_author"'
         unique_together = (('book', 'author'),)
 
 
@@ -91,7 +92,7 @@ class Genre(UUIDMixin, CreatedMixin, ModifiedMixin):
         return self.name
 
     class Meta:
-        db_table = 'genre'
+        db_table = '"library"."genre"'
         verbose_name = _('genre')
         verbose_name_plural = _('genres')
 
@@ -100,6 +101,6 @@ class BookGenre(UUIDMixin, CreatedMixin):
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
 
     class Meta:
-        db_table = 'book_genre'
+        db_table = '"library"."book_genre"'
         unique_together = (('book', 'genre'),)
 

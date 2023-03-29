@@ -2,10 +2,11 @@ from django.shortcuts import render
 from .models import Book, Genre, Author
 from django.views.generic import ListView
 from django.core.paginator import Paginator
+from rest_framework.viewsets import ModelViewSet
+from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
 
 
 PAGINATOR_THRESHOLD = 20
-
 TEMPLATE_MAIN = 'index.html'
 
 def custom_main(request):
@@ -65,3 +66,14 @@ GENRE_ENTITY = f'{ENTITIES}/genre.html'
 book_view = entity_view(Book, 'book', BOOK_ENTITY)
 genre_view = entity_view(Genre, 'genre', GENRE_ENTITY)
 author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
+
+def create_viewset(cls_model, serializer, order_field):
+    class CustomViewSet(ModelViewSet):
+        queryset = cls_model.objects.all().order_by(order_field)
+        serializer_class = serializer
+    
+    return CustomViewSet
+
+BookViewSet = create_viewset(Book, BookSerializer, 'title')
+AuthorViewSet = create_viewset(Author, AuthorSerializer, 'full_name')
+GenreViewSet = create_viewset(Genre, GenreSerializer, 'name')
