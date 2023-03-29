@@ -69,9 +69,21 @@ author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
 
 def create_viewset(cls_model, serializer, order_field):
     class CustomViewSet(ModelViewSet):
-        queryset = cls_model.objects.all().order_by(order_field)
+        queryset = cls_model.objects.all()
         serializer_class = serializer
-    
+
+        def get_queryset(self):
+            queryset = cls_model.objects.all()
+            query = {}
+            for field in serializer.Meta.fields:
+                value = self.request.GET.get(field, '')
+                if value:
+                    query[field] = value
+            if query:
+                queryset = queryset.filter(**query)
+            return queryset.order_by(order_field)
+
+
     return CustomViewSet
 
 BookViewSet = create_viewset(Book, BookSerializer, 'title')
