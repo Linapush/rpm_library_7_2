@@ -4,7 +4,10 @@ from django.views.generic import ListView
 from django.core.paginator import Paginator
 from rest_framework.viewsets import ModelViewSet
 from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import BasePermission
+from rest_framework import status as status_codes
+from rest_framework.response import Response
+from rest_framework.parsers import JSONParser
 
 
 PAGINATOR_THRESHOLD = 20
@@ -70,12 +73,27 @@ author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
 
 
 class Permission(BasePermission):
+    safe_methods = ('GET', 'HEAD', 'OPTIONS', 'PATCH')
+    unsafe_methods = ('POST', 'PUT', 'DELETE')
+
     def has_permission(self, request, _):
-        if request.method == 'GET':
+        if request.method in self.safe_methods:
             return bool(request.user and request.user.is_authenticated)
-        elif request.method == 'POST' or request.method == 'DELETE':
+        elif request.method in self.unsafe_methods:
             return bool(request.user and request.user.is_superuser)
         return False
+
+
+def query_from_request(cls_serializer, request) -> dict:
+    """Gets query from request according to fields of the serializer class. 
+    Returns empty dict if didn't find any."""
+    query = {}
+    for field in cls_serializer.Meta.fields:
+        value = request.GET.get(field, '')
+        if value:
+            query[field] = value
+    return query
+
 
 def create_viewset(cls_model, serializer, order_field):
     class CustomViewSet(ModelViewSet):
@@ -84,16 +102,31 @@ def create_viewset(cls_model, serializer, order_field):
         permission_classes = [Permission]
 
         def get_queryset(self):
-            queryset = cls_model.objects.all()
-            query = {}
-            for field in serializer.Meta.fields:
-                value = self.request.GET.get(field, '')
-                if value:
-                    query[field] = value
-            if query:
-                queryset = queryset.filter(**query)
+            query = query_from_request(serializer, self.request)
+            queryset = cls_model.objects.filter(**query) if query else cls_model.objects.all()
             return queryset.order_by(order_field)
 
+        def delete(self, request):
+            def response_from_objects(num):
+                if not num:
+                    content = f'DELETE for model {cls_model.__name__}: query did not match any objects'
+                    return Response(content, status=status_codes.HTTP_404_NOT_FOUND)
+                status = status_codes.HTTP_204_NO_CONTENT if num == 1 else status_codes.HTTP_200_OK
+                return Response(f'DELETED {num} instances of {cls_model.__name__}', status=status)
+
+            query = query_from_request(serializer, request)
+            if query:
+                objects = cls_model.objects.all().filter(**query)
+                num_objects = len(objects)
+                try:
+                    objects.delete()
+                except Exception as error:
+                    return Response(error, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
+                return response_from_objects(num_objects)
+            return Response('DELETE has got no query', status=status_codes.HTTP_400_BAD_REQUEST)
+
+        def put(self, request):
+            pass
 
     return CustomViewSet
 

@@ -3,9 +3,9 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-router.register(r'Book', views.BookViewSet)
-router.register(r'Genre', views.GenreViewSet)
-router.register(r'Author', views.AuthorViewSet)
+router.register(r'Book', views.BookViewSet, basename='Book')
+router.register(r'Genre', views.GenreViewSet, basename='Genre')
+router.register(r'Author', views.AuthorViewSet, basename='Author')
 
 urlpatterns = [
     path('homepage/', views.custom_main, name='homepage'),
