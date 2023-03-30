@@ -126,7 +126,40 @@ def create_viewset(cls_model, serializer, order_field):
             return Response('DELETE has got no query', status=status_codes.HTTP_400_BAD_REQUEST)
 
         def put(self, request):
-            pass
+            """gets id from query and updates instance with this ID, creates new if doesnt find any."""
+            def serialize(target):
+                content = JSONParser().parse(request)
+                model_name = cls_model.__name__
+                if target:
+                    serialized = serializer(target, data=content, partial=True)
+                    status = status_codes.HTTP_200_OK
+                    body = f'PUT has updated {model_name} instance'
+                else:
+                    serialized = serializer(data=content, partial=True)
+                    status = status_codes.HTTP_201_CREATED
+                    body = f'PUT has created new {model_name} instance'
+                if not serialized.is_valid():
+                    return (
+                        f'PUT could not serialize query {query} into {model_name}',
+                        status_codes.HTTP_400_BAD_REQUEST
+                    )
+                try:
+                    model_obj = serialized.save()
+                except Exception as error:
+                    return error, status_codes.HTTP_500_INTERNAL_SERVER_ERROR
+                body = f'{body} with id={model_obj.id}'
+                return body, status
+        
+            query = query_from_request(serializer, request)
+            target_id = query.get('id', '')
+            if not target_id:
+                return Response('PUT has got no id', status=status_codes.HTTP_400_BAD_REQUEST)
+            try:
+                target_object = cls_model.objects.get(id=target_id)
+            except Exception:
+                target_object = None
+            content, status = serialize(target_object)
+            return Response(content, status=status)
 
     return CustomViewSet
 
