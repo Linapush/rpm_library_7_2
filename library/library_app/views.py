@@ -144,10 +144,10 @@ def create_viewset(cls_model, serializer, order_field):
                         status_codes.HTTP_400_BAD_REQUEST
                     )
                 try:
-                    model_obj = serialized.save()
+                    model_obj = serialized.save() ##########
                 except Exception as error:
                     return error, status_codes.HTTP_500_INTERNAL_SERVER_ERROR
-                body = f'{body} with id={model_obj.id}'
+                body = f'{body} with id={model_obj.id}' ###################
                 return body, status
         
             query = query_from_request(serializer, request)
