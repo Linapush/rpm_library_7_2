@@ -11,6 +11,25 @@ from rest_framework.parsers import JSONParser
 from . import config
 from .forms import WeatherForm
 from .weather import get_weather
+from rest_framework.decorators import api_view
+
+
+@api_view(['GET'])
+def weather_rest(request):
+    location = request.GET.get('location')
+    locations = config.LOCATIONS_COORDINATES.keys()
+    if not location or location not in locations:
+        return Response(
+            f'Wrong location value in query, available locations are: {locations}',
+            status=status_codes.HTTP_400_BAD_REQUEST
+        )
+    response = get_weather(location)
+    if response and response.status_code == status_codes.HTTP_200_OK:
+        return Response(response.json().get('fact'), status=status_codes.HTTP_200_OK)
+    return Response(
+        'Foreign weather API did not repond properly', 
+        status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR
+    )
 
 
 def weather_page(request):

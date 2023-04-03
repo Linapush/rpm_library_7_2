@@ -18,5 +18,6 @@ urlpatterns = [
     path('weather/', views.weather_page, name='weather'),
     # REST
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('rest/', include(router.urls))
+    path('rest/', include(router.urls)),
+    path('rest/weather/', views.weather_rest)
 ]
