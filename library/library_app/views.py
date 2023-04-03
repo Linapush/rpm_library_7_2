@@ -8,15 +8,32 @@ from rest_framework.permissions import BasePermission
 from rest_framework import status as status_codes
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from . import config
+from .forms import WeatherForm
+from .weather import get_weather
 
 
-PAGINATOR_THRESHOLD = 20
-TEMPLATE_MAIN = 'index.html'
+def weather_page(request):
+    location = request.GET.get('location')
+    weather_data = {}
+    if location:
+        response = get_weather(location)
+        if response and response.status_code == status_codes.HTTP_200_OK:
+            weather_data = response.json().get('fact')
+    return render(
+        request,
+        config.TEMPLATE_WEATHER,
+        context={
+            'form': WeatherForm(),
+            'weather_data': weather_data
+        }
+    )
+
 
 def custom_main(request):
     return render(
         request,
-        TEMPLATE_MAIN,
+        config.TEMPLATE_MAIN,
         context={
             'books': Book.objects.all().count(),
             'genres': Genre.objects.all().count(),
@@ -28,13 +45,13 @@ def catalog_view(cls_model, context_name, template):
     class CustomListView(ListView):
         model = cls_model
         template_name = template
-        paginate_by = PAGINATOR_THRESHOLD
+        paginate_by = config.PAGINATOR_THRESHOLD
         context_object_name = context_name
 
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
             objects = cls_model.objects.all()
-            paginator = Paginator(objects, PAGINATOR_THRESHOLD)
+            paginator = Paginator(objects, config.PAGINATOR_THRESHOLD)
             page = self.request.GET.get('page')
             page_obj = paginator.get_page(page)
             context[f'{context_name}_list'] = page_obj
@@ -53,23 +70,14 @@ def entity_view(cls_model, name, template):
         )
     return view
 
-CATALOG = 'catalog'
-BOOKS_CATALOG = f'{CATALOG}/books.html'
-AUTHORS_CATALOG = f'{CATALOG}/authors.html'
-GENRES_CATALOG = f'{CATALOG}/genres.html'
 
-BookListView = catalog_view(Book, 'books', BOOKS_CATALOG)
-AuthorListView = catalog_view(Author, 'authors', AUTHORS_CATALOG)
-GenreListView = catalog_view(Genre, 'genres', GENRES_CATALOG)
+BookListView = catalog_view(Book, 'books', config.BOOKS_CATALOG)
+AuthorListView = catalog_view(Author, 'authors', config.AUTHORS_CATALOG)
+GenreListView = catalog_view(Genre, 'genres', config.GENRES_CATALOG)
 
-ENTITIES = 'entities'
-BOOK_ENTITY = f'{ENTITIES}/book.html'
-AUTHOR_ENTITY = f'{ENTITIES}/author.html'
-GENRE_ENTITY = f'{ENTITIES}/genre.html'
-
-book_view = entity_view(Book, 'book', BOOK_ENTITY)
-genre_view = entity_view(Genre, 'genre', GENRE_ENTITY)
-author_view = entity_view(Author, 'author', AUTHOR_ENTITY)
+book_view = entity_view(Book, 'book', config.BOOK_ENTITY)
+genre_view = entity_view(Genre, 'genre', config.GENRE_ENTITY)
+author_view = entity_view(Author, 'author', config.AUTHOR_ENTITY)
 
 
 class Permission(BasePermission):
@@ -144,10 +152,10 @@ def create_viewset(cls_model, serializer, order_field):
                         status_codes.HTTP_400_BAD_REQUEST
                     )
                 try:
-                    model_obj = serialized.save() ##########
+                    model_obj = serialized.save()
                 except Exception as error:
                     return error, status_codes.HTTP_500_INTERNAL_SERVER_ERROR
-                body = f'{body} with id={model_obj.id}' ###################
+                body = f'{body} with id={model_obj.id}'
                 return body, status
         
             query = query_from_request(serializer, request)
