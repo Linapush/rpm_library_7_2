@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
-
+from . import config
 
 class UUIDMixin(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
@@ -25,7 +25,7 @@ class ModifiedMixin(models.Model):
         abstract = True
 
 class Author(UUIDMixin, CreatedMixin, ModifiedMixin):
-    full_name = models.CharField(_('full name'), max_length=40)
+    full_name = models.CharField(_('full name'), max_length=config.CF_DEFAULT)
     books = models.ManyToManyField('Book', verbose_name=_('books'), through='BookAuthor')
 
     def __str__(self):
@@ -57,12 +57,12 @@ book_types = (
 )
 
 class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
-    title = models.CharField(_('title'), max_length=40)
+    title = models.CharField(_('title'), max_length=config.CF_DEFAULT)
     description = models.TextField(_('description'), blank=True, null=True)
     volume = models.IntegerField(_('volume'), blank=True, null=True, validators=[positive_int])
     age_limit = models.IntegerField(_('age limit'), blank=True, null=True, validators=[positive_int])
     year = models.IntegerField(_('year'), blank=True, null=True, validators=[year_validator])
-    type = models.CharField(_('type'), max_length=20, choices=book_types, blank=False, null=False)
+    type = models.CharField(_('type'), max_length=config.CF_DEFAULT, choices=book_types, blank=False, null=False)
     authors = models.ManyToManyField(Author, verbose_name=_('authors'), through='BookAuthor')
     genres = models.ManyToManyField('Genre', verbose_name=_('genres'), through='BookGenre')
 
@@ -85,7 +85,7 @@ class BookAuthor(UUIDMixin, CreatedMixin):
 
 
 class Genre(UUIDMixin, CreatedMixin, ModifiedMixin):
-    name = models.CharField(_('name'), max_length=30)
+    name = models.CharField(_('name'), max_length=config.CF_DEFAULT)
     description = models.TextField(_('description'), blank=True, null=True)
 
     def __str__(self):

@@ -30,3 +30,5 @@ YANDEX_API_URL = 'https://api.weather.yandex.ru/v2/informers'
 YANDEX_API_HEADER = 'X-Yandex-API-Key'
 LOCATIONS_NAMES = [(key, key) for key in LOCATIONS_COORDINATES.keys()]
 YANDEX_KEY = getenv('YANDEX_KEY')
+
+CF_DEFAULT = 40
