@@ -1,24 +1,30 @@
 from django.test import TestCase
-from library_app.forms import WeatherForm
+from library_app import forms
 from library_app.config import LOCATIONS_COORDINATES
 from random import sample
-from string import ascii_lowercase
+from string import ascii_letters
+
 
 class WeatherFormTests(TestCase):
+    def generate_random(self) -> str:
+        return ''.join(sample(ascii_letters, 10))
 
-    def test_appropriate(self):
-        if LOCATIONS_COORDINATES:
-            WeatherForm(data={'location': list(LOCATIONS_COORDINATES.keys())[0]})
-        else:
-            raise Exception('Locations for weather page are not provided')
-
+    def test_successful(self):
+        if not LOCATIONS_COORDINATES:
+            raise Exception(f'Weather form locations are not provided by config')
+        forms.WeatherForm(data={'location': list(LOCATIONS_COORDINATES.keys())[0]})
+        
     def test_failing(self):
-        if LOCATIONS_COORDINATES:
-            location = ''.join(sample(ascii_lowercase, 10))
-            while location in LOCATIONS_COORDINATES.keys():
-                location = ''.join(sample(ascii_lowercase, 10))
-            form = WeatherForm(data={'location': location})
-            error = f'Выберите корректный вариант. {location} нет среди допустимых значений.'
-            self.assertEqual(form.errors['location'], [error])
-        else:
-            raise Exception('Locations for weather page are not provided')
+        if not LOCATIONS_COORDINATES:
+            raise Exception(f'Weather form locations are not provided by config')
+        location = self.generate_random()
+        while location in LOCATIONS_COORDINATES.keys():
+            location = self.generate_random()
+        form = forms.WeatherForm(data={'location': location})
+        desired_errors = [
+            f'Выберите корректный вариант. {location} нет среди допустимых значений.',
+            f'Select a valid choice. {location} is not one of the available choices.'
+        ]
+        for error in form.errors['location']:
+            assert error in desired_errors
+

@@ -2,19 +2,25 @@ from django.test import TestCase
 from library_app.models import Genre, Author, Book
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK as OK
+from django.contrib.auth.models import User
+from django.test.client import Client
 
 
 def test_listview(cls_model, url, page_name, template, attrs):
     class ListViewTest(TestCase):
         def setUp(self):
-            for _ in range(100):
-                cls_model.objects.create(**attrs)
+            self.client = Client()
+            username = password = 'test'
+            self.user = User.objects.create_user(username=username, email='a@a.com', password=password)
+            self.client.login(username=username, password=password)
+            # for _ in range(100):
+            #     cls_model.objects.create(**attrs)
         
         def test_exists_by_url(self):
-            assert self.client.get(url).status_code == OK
+            self.assertEqual(self.client.get(url).status_code, OK)
 
         def test_exists_by_name(self):
-            assert self.client.get(reverse(page_name)).status_code == OK
+            self.assertEqual(self.client.get(reverse(page_name)).status_code, OK)
 
         def test_view_template(self):
             response = self.client.get(url)
