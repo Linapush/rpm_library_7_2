@@ -19,5 +19,7 @@ urlpatterns = [
     # REST
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('rest/', include(router.urls)),
-    path('rest/weather/', views.weather_rest)
+    path('rest/weather/', views.weather_rest),
+    # auth
+    path('accounts/', include('django.contrib.auth.urls')),
 ]

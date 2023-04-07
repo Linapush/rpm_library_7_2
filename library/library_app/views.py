@@ -12,8 +12,10 @@ from . import config
 from .forms import WeatherForm
 from .weather import get_weather
 from rest_framework.decorators import api_view
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 @api_view(['GET'])
 def weather_rest(request):
     location = request.GET.get('location')
@@ -61,7 +63,7 @@ def custom_main(request):
     )
 
 def catalog_view(cls_model, context_name, template):
-    class CustomListView(ListView):
+    class CustomListView(LoginRequiredMixin, ListView):
         model = cls_model
         template_name = template
         paginate_by = config.PAGINATOR_THRESHOLD
@@ -79,6 +81,7 @@ def catalog_view(cls_model, context_name, template):
     return CustomListView
 
 def entity_view(cls_model, name, template):
+    @login_required
     def view(request):
         return render(
             request,
