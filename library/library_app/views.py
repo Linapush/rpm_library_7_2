@@ -15,7 +15,7 @@ from rest_framework.decorators import api_view
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 
-@login_required
+
 @api_view(['GET'])
 def weather_rest(request):
     location = request.GET.get('location')
@@ -34,6 +34,7 @@ def weather_rest(request):
     )
 
 
+@login_required
 def weather_page(request):
     location = request.GET.get('location')
     weather_data = {}
