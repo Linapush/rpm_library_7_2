@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework.status import HTTP_200_OK as OK
 from django.contrib.auth.models import User
 from django.test.client import Client
+from library_app.config import PAGINATOR_THRESHOLD
 
 
 def test_view(url, page_name, template, cls_model=None, attrs=None):
@@ -13,8 +14,9 @@ def test_view(url, page_name, template, cls_model=None, attrs=None):
             username = password = 'test'
             self.user = User.objects.create_user(username=username, email='a@a.com', password=password)
             self.client.login(username=username, password=password)
+            self.extra = 1
             if cls_model:
-                for _ in range(100):
+                for _ in range(PAGINATOR_THRESHOLD + self.extra):
                     cls_model.objects.create(**attrs)
         
         def test_exists_by_url(self):
@@ -27,6 +29,21 @@ def test_view(url, page_name, template, cls_model=None, attrs=None):
             response = self.client.get(url)
             self.assertEqual(response.status_code, OK)
             self.assertTemplateUsed(response, template)
+
+        def test_pagination(self):
+            if cls_model:
+                resp_get = self.client.get(reverse(page_name))
+                self.assertEqual(resp_get.status_code, OK)
+                self.assertTrue('is_paginated' in resp_get.context)
+                self.assertEqual(resp_get.context.get('is_paginated'), True)
+
+                # testing the number of model objects on first page
+                resp_first_page = self.client.get(reverse(page_name), {'query': '', 'page': 1})
+                self.assertEqual(len(resp_first_page.context.get(f'{page_name}_list')), PAGINATOR_THRESHOLD)
+
+                # testing the number of model objects on second page
+                resp_second_page = self.client.get(reverse(page_name), {'query': '', 'page': 2})
+                self.assertEqual(len(resp_second_page.context.get(f'{page_name}_list')), self.extra)
 
     return ViewTest
 

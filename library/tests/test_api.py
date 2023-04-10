@@ -77,7 +77,6 @@ class ViewSetsTests(TestCase):
             resp_put = self.client.put(
                 f'{url}?id={created.id}',
                 data=dumps(to_change),
-               # content_type='text/json'
             )
             print(f'RESP PUT CONTENT: {resp_put.content}')
             self.assertEqual(resp_put.status_code, status.HTTP_403_FORBIDDEN)
