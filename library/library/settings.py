@@ -124,4 +124,4 @@ STATIC_URL = 'static/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-TEST_RUNNER = 'tests.test_runner.PostgresSchemaRunner'
+TEST_RUNNER = 'tests.runner.PostgresSchemaRunner'
