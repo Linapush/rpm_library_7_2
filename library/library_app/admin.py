@@ -3,48 +3,56 @@ from .models import Book, Genre, Author, BookAuthor, BookGenre
 from datetime import datetime
 
 
-class BookAuthor_inline(admin.TabularInline):
+DECADE = 10
+
+
+class BookAuthorInline(admin.TabularInline):
     model = BookAuthor
     extra = 1
 
-class BookGenre_inline(admin.TabularInline):
+
+class BookGenreInline(admin.TabularInline):
     model = BookGenre
     extra = 1
 
+
 class RecencyBookFilter(admin.SimpleListFilter):
-    title='recency'
-    parameter_name='recency'
+    title = 'recency'
+    parameter_name = 'recency'
 
     def lookups(self, *_):
         return (
             ('10yo', 'Written in the last 10 years'),
             ('20yo', 'Written in the last 20 years'),
         )
-    
+
     def queryset(self, _, queryset):
-        def filter(queryset, year):
-            return queryset.filter(year__gte = year)
+        def book_filter(instances, year):
+            return instances.filter(year__gte=year)
         if self.value() == '10yo':
-            return filter(queryset, datetime.now().year - 10)
+            return book_filter(queryset, datetime.now().year - DECADE)
         elif self.value() == '20yo':
-            return filter(queryset, datetime.now().year - 20)
+            return book_filter(queryset, datetime.now().year - DECADE * 2)
         return queryset
+
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     model = Book
-    inlines = (BookAuthor_inline, BookGenre_inline)
+    inlines = (BookAuthorInline, BookGenreInline)
     list_filter = (
         'genres',
         'type',
         RecencyBookFilter,
-        'authors'
+        'authors',
     )
+
 
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
     model = Author
-    inlines = (BookAuthor_inline,)
+    inlines = (BookAuthorInline,)
+
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):

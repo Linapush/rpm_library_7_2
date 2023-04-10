@@ -7,6 +7,7 @@ def prepare_db(self):
     self.connect()
     self.connection.cursor().execute('CREATE SCHEMA IF NOT EXISTS library;')
 
+
 class PostgresSchemaRunner(DiscoverRunner):
 
     def setup_databases(self, **kwargs):

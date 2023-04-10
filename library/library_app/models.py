@@ -1,10 +1,10 @@
 from django.db import models
 from uuid import uuid4
 from django.core.exceptions import ValidationError
-from datetime import datetime
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
 from . import config
+
 
 class UUIDMixin(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
@@ -12,17 +12,20 @@ class UUIDMixin(models.Model):
     class Meta:
         abstract = True
 
+
 class CreatedMixin(models.Model):
     created = models.DateTimeField(_('created'), default=datetime.now, blank=True, null=False)
 
     class Meta:
         abstract = True
 
+
 class ModifiedMixin(models.Model):
     modified = models.DateTimeField(_('modified'), default=datetime.now, blank=True, null=False)
 
     class Meta:
         abstract = True
+
 
 class Author(UUIDMixin, CreatedMixin, ModifiedMixin):
     full_name = models.CharField(_('full name'), max_length=config.CF_DEFAULT)
@@ -36,25 +39,29 @@ class Author(UUIDMixin, CreatedMixin, ModifiedMixin):
         verbose_name = _('author')
         verbose_name_plural = _('authors')
 
+
 def positive_int(num: int):
     if num <= 0:
         raise ValidationError(
             f'Value {num} is less or equal zero',
-            params={'value': num}
+            params={'value': num},
         )
+
 
 def year_validator(year: int):
     current_year = datetime.now().year
     if year > current_year:
         raise ValidationError(
             f'The year field must be less or equal {current_year}',
-            params={'year': year}
+            params={'year': year},
         )
+
 
 book_types = (
     ('book', _('book')),
-    ('journal', _('journal'))
+    ('journal', _('journal')),
 )
+
 
 class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
     title = models.CharField(_('title'), max_length=config.CF_DEFAULT)
@@ -96,6 +103,7 @@ class Genre(UUIDMixin, CreatedMixin, ModifiedMixin):
         verbose_name = _('genre')
         verbose_name_plural = _('genres')
 
+
 class BookGenre(UUIDMixin, CreatedMixin):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
@@ -103,4 +111,3 @@ class BookGenre(UUIDMixin, CreatedMixin):
     class Meta:
         db_table = '"library"."book_genre"'
         unique_together = (('book', 'genre'),)
-

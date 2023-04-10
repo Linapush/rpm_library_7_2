@@ -15,6 +15,7 @@ def creation_tests(cls_model, normal: dict, failing: dict):
 
     return Tests
 
+
 normal_name = 'a' * CF_DEFAULT
 long_name = 'a' * (CF_DEFAULT + 1)
 

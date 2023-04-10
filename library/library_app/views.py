@@ -2,35 +2,31 @@ from django.shortcuts import render
 from .models import Book, Genre, Author
 from django.views.generic import ListView
 from django.core.paginator import Paginator
-from rest_framework.viewsets import ModelViewSet
+from rest_framework import viewsets, permissions, status as status_codes, parsers, decorators
 from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
-from rest_framework.permissions import BasePermission
-from rest_framework import status as status_codes
 from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
 from . import config
 from .forms import WeatherForm
 from .weather import get_weather
-from rest_framework.decorators import api_view
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 
 
-@api_view(['GET'])
+@decorators.api_view(['GET'])
 def weather_rest(request):
     location = request.GET.get('location')
     locations = config.LOCATIONS_COORDINATES.keys()
     if not location or location not in locations:
         return Response(
             f'Wrong location value in query, available locations are: {locations}',
-            status=status_codes.HTTP_400_BAD_REQUEST
+            status=status_codes.HTTP_400_BAD_REQUEST,
         )
     response = get_weather(location)
     if response and response.status_code == status_codes.HTTP_200_OK:
         return Response(response.json().get('fact'), status=status_codes.HTTP_200_OK)
     return Response(
-        'Foreign weather API did not repond properly', 
-        status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR
+        'Foreign weather API did not repond properly',
+        status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 
@@ -47,8 +43,8 @@ def weather_page(request):
         config.TEMPLATE_WEATHER,
         context={
             'form': WeatherForm(),
-            'weather_data': weather_data
-        }
+            'weather_data': weather_data,
+        },
     )
 
 
@@ -60,8 +56,9 @@ def custom_main(request):
             'books': Book.objects.all().count(),
             'genres': Genre.objects.all().count(),
             'authors': Author.objects.all().count(),
-        }
+        },
     )
+
 
 def catalog_view(cls_model, context_name, template):
     class CustomListView(LoginRequiredMixin, ListView):
@@ -72,14 +69,15 @@ def catalog_view(cls_model, context_name, template):
 
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            objects = cls_model.objects.all()
-            paginator = Paginator(objects, config.PAGINATOR_THRESHOLD)
+            instances = cls_model.objects.all()
+            paginator = Paginator(instances, config.PAGINATOR_THRESHOLD)
             page = self.request.GET.get('page')
             page_obj = paginator.get_page(page)
             context[f'{context_name}_list'] = page_obj
             return context
 
     return CustomListView
+
 
 def entity_view(cls_model, name, template):
     @login_required
@@ -88,8 +86,8 @@ def entity_view(cls_model, name, template):
             request,
             template,
             context={
-                name: cls_model.objects.get(id=request.GET.get('id', ''))
-            }
+                name: cls_model.objects.get(id=request.GET.get('id', '')),
+            },
         )
     return view
 
@@ -103,7 +101,7 @@ genre_view = entity_view(Genre, 'genre', config.GENRE_ENTITY)
 author_view = entity_view(Author, 'author', config.AUTHOR_ENTITY)
 
 
-class Permission(BasePermission):
+class Permission(permissions.BasePermission):
     safe_methods = ('GET', 'HEAD', 'OPTIONS', 'PATCH')
     unsafe_methods = ('POST', 'PUT', 'DELETE')
 
@@ -116,18 +114,16 @@ class Permission(BasePermission):
 
 
 def query_from_request(cls_serializer, request) -> dict:
-    """Gets query from request according to fields of the serializer class. 
-    Returns empty dict if didn't find any."""
     query = {}
     for field in cls_serializer.Meta.fields:
-        value = request.GET.get(field, '')
-        if value:
-            query[field] = value
+        obj_value = request.GET.get(field, '')
+        if obj_value:
+            query[field] = obj_value
     return query
 
 
 def create_viewset(cls_model, serializer, order_field):
-    class CustomViewSet(ModelViewSet):
+    class CustomViewSet(viewsets.ModelViewSet):
         queryset = cls_model.objects.all()
         serializer_class = serializer
         permission_classes = [Permission]
@@ -140,39 +136,39 @@ def create_viewset(cls_model, serializer, order_field):
         def delete(self, request):
             def response_from_objects(num):
                 if not num:
-                    content = f'DELETE for model {cls_model.__name__}: query did not match any objects'
-                    return Response(content, status=status_codes.HTTP_404_NOT_FOUND)
+                    message = f'DELETE for model {cls_model.__name__}: query did not match any objects'
+                    return Response(message, status=status_codes.HTTP_404_NOT_FOUND)
                 status = status_codes.HTTP_204_NO_CONTENT if num == 1 else status_codes.HTTP_200_OK
                 return Response(f'DELETED {num} instances of {cls_model.__name__}', status=status)
 
             query = query_from_request(serializer, request)
             if query:
-                objects = cls_model.objects.all().filter(**query)
-                num_objects = len(objects)
+                instances = cls_model.objects.all().filter(**query)
+                num_objects = len(instances)
                 try:
-                    objects.delete()
+                    instances.delete()
                 except Exception as error:
                     return Response(error, status=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
                 return response_from_objects(num_objects)
             return Response('DELETE has got no query', status=status_codes.HTTP_400_BAD_REQUEST)
 
         def put(self, request):
-            """gets id from query and updates instance with this ID, creates new if doesnt find any."""
+            # gets id from query and updates instance with this ID, creates new if doesnt find any.
             def serialize(target):
-                content = JSONParser().parse(request)
+                attrs = parsers.JSONParser().parse(request)
                 model_name = cls_model.__name__
                 if target:
-                    serialized = serializer(target, data=content, partial=True)
+                    serialized = serializer(target, data=attrs, partial=True)
                     status = status_codes.HTTP_200_OK
                     body = f'PUT has updated {model_name} instance'
                 else:
-                    serialized = serializer(data=content, partial=True)
+                    serialized = serializer(data=attrs, partial=True)
                     status = status_codes.HTTP_201_CREATED
                     body = f'PUT has created new {model_name} instance'
                 if not serialized.is_valid():
                     return (
                         f'PUT could not serialize query {query} into {model_name}',
-                        status_codes.HTTP_400_BAD_REQUEST
+                        status_codes.HTTP_400_BAD_REQUEST,
                     )
                 try:
                     model_obj = serialized.save()
@@ -180,7 +176,7 @@ def create_viewset(cls_model, serializer, order_field):
                     return error, status_codes.HTTP_500_INTERNAL_SERVER_ERROR
                 body = f'{body} with id={model_obj.id}'
                 return body, status
-        
+
             query = query_from_request(serializer, request)
             target_id = query.get('id', '')
             if not target_id:
@@ -189,10 +185,11 @@ def create_viewset(cls_model, serializer, order_field):
                 target_object = cls_model.objects.get(id=target_id)
             except Exception:
                 target_object = None
-            content, status = serialize(target_object)
-            return Response(content, status=status)
+            message, status = serialize(target_object)
+            return Response(message, status=status)
 
     return CustomViewSet
+
 
 BookViewSet = create_viewset(Book, BookSerializer, 'title')
 AuthorViewSet = create_viewset(Author, AuthorSerializer, 'full_name')

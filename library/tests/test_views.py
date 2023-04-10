@@ -5,20 +5,22 @@ from rest_framework.status import HTTP_200_OK as OK
 from django.contrib.auth.models import User
 from django.test.client import Client
 from library_app.config import PAGINATOR_THRESHOLD
+from string import ascii_letters as letters
 
 
 def test_view(url, page_name, template, cls_model=None, attrs=None):
     class ViewTest(TestCase):
         def setUp(self):
             self.client = Client()
-            username = password = 'test'
+            username = letters[:10]
+            password = letters[:10]
             self.user = User.objects.create_user(username=username, email='a@a.com', password=password)
             self.client.login(username=username, password=password)
             self.extra = 1
             if cls_model:
                 for _ in range(PAGINATOR_THRESHOLD + self.extra):
                     cls_model.objects.create(**attrs)
-        
+
         def test_exists_by_url(self):
             self.assertEqual(self.client.get(url).status_code, OK)
 
@@ -46,6 +48,7 @@ def test_view(url, page_name, template, cls_model=None, attrs=None):
                 self.assertEqual(len(resp_second_page.context.get(f'{page_name}_list')), self.extra)
 
     return ViewTest
+
 
 genre_attrs = {'name': 'genre'}
 GenreListViewTest = test_view('/genres/', 'genres', 'catalog/genres.html', Genre, genre_attrs)
