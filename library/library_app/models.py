@@ -130,7 +130,7 @@ class Client(CreatedMixin, ModifiedMixin):
         default=0,
     )
     books = models.ManyToManyField(Book, through='BookClient')
-    
+
     class Meta:
         db_table = '"library"."client"'
         verbose_name = _('client')

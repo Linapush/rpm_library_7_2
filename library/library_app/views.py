@@ -8,14 +8,24 @@ from rest_framework.response import Response
 from . import config
 from .forms import WeatherForm, AddFundsForm
 from .weather import get_weather
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import mixins, decorators as auth_decorators
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
-@login_required
+@auth_decorators.login_required
 def profile_page(request):
     user = request.user
     client = Client.objects.get(user=user)
+
+    if request.method == 'POST':
+        form = AddFundsForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                client.money += form.cleaned_data.get('money')
+                client.save()
+            return HttpResponseRedirect(reverse('profile'))
 
     user_data = {
         'username': user.username,
@@ -36,7 +46,7 @@ def profile_page(request):
     )
 
 
-@decorators.api_view(['GET'])
+@decorators.decorators.api_view(['GET'])
 def weather_rest(request):
     location = request.GET.get('location')
     locations = config.LOCATIONS_COORDINATES.keys()
@@ -54,7 +64,7 @@ def weather_rest(request):
     )
 
 
-@login_required
+@auth_decorators.login_required
 def weather_page(request):
     location = request.GET.get('location')
     weather_data = {}
@@ -85,7 +95,7 @@ def custom_main(request):
 
 
 def catalog_view(cls_model, context_name, template):
-    class CustomListView(LoginRequiredMixin, ListView):
+    class CustomListView(mixins.LoginRequiredMixin, ListView):
         model = cls_model
         template_name = template
         paginate_by = config.PAGINATOR_THRESHOLD
@@ -104,7 +114,7 @@ def catalog_view(cls_model, context_name, template):
 
 
 def entity_view(cls_model, name, template):
-    @login_required
+    @decorators.login_required
     def view(request):
         return render(
             request,

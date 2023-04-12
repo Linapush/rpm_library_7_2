@@ -9,6 +9,7 @@
         </ul>
     {% endif %}
     <form action="/profile/" method="POST">
+        {% csrf_token %}
         {{ form }}
         <input type="submit" value="Add funds">
     </form>
