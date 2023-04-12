@@ -1,0 +1,15 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    {% if user_data %}
+        <ul>
+            {% for key, value in user_data.items %} 
+                <li>{{key}} - {{value}}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form action="/profile/" method="POST">
+        {{ form }}
+        <input type="submit" value="Add funds">
+    </form>
+{% endblock %}

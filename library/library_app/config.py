@@ -5,6 +5,7 @@ load_dotenv()  # IMPORTANT
 
 PAGINATOR_THRESHOLD = 20
 TEMPLATE_WEATHER = 'pages/weather.html'
+TEMPLATE_PROFILE = 'pages/profile.html'
 TEMPLATE_MAIN = 'index.html'
 
 ENTITIES = 'entities'
@@ -32,3 +33,5 @@ LOCATIONS_NAMES = [(key, key) for key in LOCATIONS_COORDINATES.keys()]
 YANDEX_KEY = getenv('YANDEX_KEY')
 
 CF_DEFAULT = 40
+DECIMAL_MAX_DIGITS = 10
+DECIMAL_PLACES = 2

@@ -9,6 +9,7 @@ router.register(r'Author', views.AuthorViewSet, basename='Author')
 
 urlpatterns = [
     path('', views.custom_main, name='homepage'),
+    path('profile/', views.profile_page, name='profile'),
     path('books/', views.BookListView.as_view(), name='books'),
     path('authors/', views.AuthorListView.as_view(), name='authors'),
     path('genres/', views.GenreListView.as_view(), name='genres'),

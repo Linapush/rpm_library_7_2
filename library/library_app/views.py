@@ -1,15 +1,39 @@
 from django.shortcuts import render
-from .models import Book, Genre, Author
+from .models import Book, Genre, Author, Client
 from django.views.generic import ListView
 from django.core.paginator import Paginator
 from rest_framework import viewsets, permissions, status as status_codes, parsers, decorators
 from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
 from rest_framework.response import Response
 from . import config
-from .forms import WeatherForm
+from .forms import WeatherForm, AddFundsForm
 from .weather import get_weather
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+
+
+@login_required
+def profile_page(request):
+    user = request.user
+    client = Client.objects.get(user=user)
+
+    user_data = {
+        'username': user.username,
+        'first name': user.first_name,
+        'last name': user.last_name,
+        'email': user.email,
+        'money': client.money,
+        'your books': [book.title for book in client.books.all()],
+    }
+
+    return render(
+        request,
+        config.TEMPLATE_PROFILE,
+        context={
+            'form': AddFundsForm(),
+            'user_data': user_data,
+        },
+    )
 
 
 @decorators.api_view(['GET'])

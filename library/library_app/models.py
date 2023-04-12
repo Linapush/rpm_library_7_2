@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
 from . import config
+from django.conf.global_settings import AUTH_USER_MODEL
 
 
 class UUIDMixin(models.Model):
@@ -72,6 +73,14 @@ class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
     type = models.CharField(_('type'), max_length=config.CF_DEFAULT, choices=book_types, blank=False, null=False)
     authors = models.ManyToManyField(Author, verbose_name=_('authors'), through='BookAuthor')
     genres = models.ManyToManyField('Genre', verbose_name=_('genres'), through='BookGenre')
+    price = models.DecimalField(
+        verbose_name=_('price'),
+        max_digits=config.DECIMAL_MAX_DIGITS,
+        decimal_places=config.DECIMAL_PLACES,
+        default=0,
+        blank=False,
+        null=False,
+    )
 
     def __str__(self):
         return f'{self.title}, {self.type}, {self.year}'
@@ -111,3 +120,27 @@ class BookGenre(UUIDMixin, CreatedMixin):
     class Meta:
         db_table = '"library"."book_genre"'
         unique_together = (('book', 'genre'),)
+
+
+class Client(CreatedMixin, ModifiedMixin):
+    user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    money = models.DecimalField(
+        max_digits=config.DECIMAL_MAX_DIGITS,
+        decimal_places=config.DECIMAL_PLACES,
+        default=0,
+    )
+    books = models.ManyToManyField(Book, through='BookClient')
+    
+    class Meta:
+        db_table = '"library"."client"'
+        verbose_name = _('client')
+        verbose_name_plural = _('clients')
+
+
+class BookClient(UUIDMixin, CreatedMixin):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, blank=False, null=False)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, blank=False, null=False)
+
+    class Meta:
+        db_table = '"library"."book_client"'
+        unique_together = (('book', 'client'),)

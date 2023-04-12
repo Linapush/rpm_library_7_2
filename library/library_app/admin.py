@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, Genre, Author, BookAuthor, BookGenre
+from .models import Book, Genre, Author, BookAuthor, BookGenre, Client, BookClient
 from datetime import datetime
 
 
@@ -57,3 +57,14 @@ class AuthorAdmin(admin.ModelAdmin):
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     model = Genre
+
+
+class BookClientInline(admin.TabularInline):
+    model = BookClient
+    extra = 1
+
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    model = Client
+    inlines = (BookClientInline,)
