@@ -46,7 +46,7 @@ def profile_page(request):
     )
 
 
-@decorators.decorators.api_view(['GET'])
+@decorators.api_view(['GET'])
 def weather_rest(request):
     location = request.GET.get('location')
     locations = config.LOCATIONS_COORDINATES.keys()
@@ -114,7 +114,7 @@ def catalog_view(cls_model, context_name, template):
 
 
 def entity_view(cls_model, name, template):
-    @decorators.login_required
+    @auth_decorators.login_required
     def view(request):
         return render(
             request,
