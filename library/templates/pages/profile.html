@@ -4,9 +4,12 @@
     {% if user_data %}
         <ul>
             {% for key, value in user_data.items %} 
-                <li>{{key}} - {{value}}</li>
+                <li>{{key}}: {{value}}</li>
             {% endfor %}
         </ul>
+    {% endif %}
+    {% if form_errors %}
+        <h5>{{ form_errors }}</h5>
     {% endif %}
     <form action="/profile/" method="POST">
         {% csrf_token %}

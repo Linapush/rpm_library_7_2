@@ -15,17 +15,52 @@ from django.urls import reverse
 
 
 @auth_decorators.login_required
+def purchase_page(request):
+    client = Client.objects.get(user=request.user)
+    book_id = request.GET.get('id', '')
+    try:
+        book = Book.objects.get(id=book_id)
+    except Exception:
+        book = None
+    else:
+        if request.method == 'POST' and client.money >= book.price:
+            with transaction.atomic():
+                client.money -= book.price
+                client.books.add(book)
+                client.save()
+            url = reverse('book')
+            return HttpResponseRedirect(f'{url}?id={book_id}')
+
+    return render(
+        request,
+        template_name=config.TEMPLATE_PURCHASE,
+        context={
+            'book': book,
+            'funds': client.money,
+            'enough_money': client.money - book.price >= 0,
+        },
+    )
+
+
+@auth_decorators.login_required
 def profile_page(request):
     user = request.user
     client = Client.objects.get(user=user)
+    form_errors = []
 
     if request.method == 'POST':
         form = AddFundsForm(request.POST)
+        
         if form.is_valid():
-            with transaction.atomic():
-                client.money += form.cleaned_data.get('money')
-                client.save()
-            return HttpResponseRedirect(reverse('profile'))
+            funds_to_add = form.cleaned_data.get('money')
+            if funds_to_add > 0:
+                with transaction.atomic():
+                    client.money += funds_to_add
+                    client.save()
+                return HttpResponseRedirect(reverse('profile'))
+            form_errors.append('Amount field must be greater than zero')
+        else:
+            form_errors.extend(form.errors.get('money'))
 
     user_data = {
         'username': user.username,
@@ -42,6 +77,7 @@ def profile_page(request):
         context={
             'form': AddFundsForm(),
             'user_data': user_data,
+            'form_errors': '; '.join(form_errors)
         },
     )
 
@@ -116,12 +152,19 @@ def catalog_view(cls_model, context_name, template):
 def entity_view(cls_model, name, template):
     @auth_decorators.login_required
     def view(request):
+        target_id = request.GET.get('id', '')
+        context = {name: cls_model.objects.get(id=target_id)}
+        if cls_model is Book:
+            client = Client.objects.get(user=request.user)
+            try:
+                context['client_has_book'] = bool(client.books.get(id=target_id))
+            except Exception:
+                context['client_has_book'] = False
+
         return render(
             request,
             template,
-            context={
-                name: cls_model.objects.get(id=request.GET.get('id', '')),
-            },
+            context=context,
         )
     return view
 

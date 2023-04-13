@@ -6,6 +6,7 @@ load_dotenv()  # IMPORTANT
 PAGINATOR_THRESHOLD = 20
 TEMPLATE_WEATHER = 'pages/weather.html'
 TEMPLATE_PROFILE = 'pages/profile.html'
+TEMPLATE_PURCHASE = 'pages/purchase.html'
 TEMPLATE_MAIN = 'index.html'
 
 ENTITIES = 'entities'
