@@ -2,12 +2,25 @@
 
 {% block content %}
     {% if user_data %}
+        <h4>Your profile data:</h4>
         <ul>
             {% for key, value in user_data.items %} 
                 <li>{{key}}: {{value}}</li>
             {% endfor %}
         </ul>
     {% endif %}
+
+    {% if books %}
+        <h4>Your books:</h4>
+        <ul>
+            {% for book in books %}
+                <li> {{ book }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h4>You do not have books yet!</h4>
+    {% endif %}
+
     {% if form_errors %}
         <h5>{{ form_errors }}</h5>
     {% endif %}

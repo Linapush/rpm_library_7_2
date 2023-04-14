@@ -6,12 +6,52 @@ from rest_framework import viewsets, permissions, status as status_codes, parser
 from .serializers import BookSerializer, AuthorSerializer, GenreSerializer
 from rest_framework.response import Response
 from . import config
-from .forms import WeatherForm, AddFundsForm
+from .forms import WeatherForm, AddFundsForm, RegistrationForm
 from .weather import get_weather
 from django.contrib.auth import mixins, decorators as auth_decorators
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+
+
+def register(request):
+    form_errors = None
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            Client.objects.create(user=user)
+            return HttpResponseRedirect(reverse('profile'))
+        form_errors = form.errors
+    return render(
+        request,
+        config.TEMPLATE_REGISTER,
+        context={
+            'form': RegistrationForm(),
+            'form_errors': form_errors,
+        }
+    )
+
+
+@auth_decorators.login_required
+def read_page(request):
+    context = {}
+    client = Client.objects.get(user=request.user)
+    book_id = request.GET.get('id')
+    try:
+        context['book'] = Book.objects.get(id=book_id)
+    except Exception:
+        context['book'] = None
+    try:
+        context['user_access'] = bool(client.books.get(id=book_id))
+    except Exception:
+        context['user_access'] = False
+
+    return render(
+        request,
+        config.TEMPLATE_READ,
+        context=context,
+    )
 
 
 @auth_decorators.login_required
@@ -53,12 +93,14 @@ def profile_page(request):
         
         if form.is_valid():
             funds_to_add = form.cleaned_data.get('money')
-            if funds_to_add > 0:
+            digits = len(str(client.money + funds_to_add)) - 1
+            if funds_to_add > 0 and digits <= config.DECIMAL_MAX_DIGITS:
                 with transaction.atomic():
                     client.money += funds_to_add
                     client.save()
                 return HttpResponseRedirect(reverse('profile'))
-            form_errors.append('Amount field must be greater than zero')
+            form_errors.append(f'Amount field must be greater than zero and \
+                               the number of all digits must be less than {config.DECIMAL_MAX_DIGITS}')
         else:
             form_errors.extend(form.errors.get('money'))
 
@@ -68,7 +110,6 @@ def profile_page(request):
         'last name': user.last_name,
         'email': user.email,
         'money': client.money,
-        'your books': [book.title for book in client.books.all()],
     }
 
     return render(
@@ -77,7 +118,8 @@ def profile_page(request):
         context={
             'form': AddFundsForm(),
             'user_data': user_data,
-            'form_errors': '; '.join(form_errors)
+            'form_errors': '; '.join(form_errors),
+            'books': [book.title for book in client.books.all()],
         },
     )
 

@@ -8,10 +8,10 @@
     {% if enough_money %}
         <form action="/purchase/?id={{ book.id }}" method="POST">
             {% csrf_token %}
-            <input type="Submit" label="Buy">
+            <input type="Submit" value="Buy">
         </form>
     {% else %}
-        <h5> Insufficient funds!</h5>
+        <h5>Insufficient funds! You can add funds on <a href="{% url 'profile' %}">profile page.</a></h5>
     {% endif %}
 
 {% endblock %}

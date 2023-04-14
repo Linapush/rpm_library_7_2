@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 from os import getenv
 
-load_dotenv()  # IMPORTANT
+load_dotenv()
 
 PAGINATOR_THRESHOLD = 20
 TEMPLATE_WEATHER = 'pages/weather.html'
 TEMPLATE_PROFILE = 'pages/profile.html'
 TEMPLATE_PURCHASE = 'pages/purchase.html'
+TEMPLATE_READ = 'pages/read.html'
+TEMPLATE_REGISTER = 'registration/register.html'
 TEMPLATE_MAIN = 'index.html'
 
 ENTITIES = 'entities'

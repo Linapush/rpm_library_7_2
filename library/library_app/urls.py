@@ -11,6 +11,7 @@ urlpatterns = [
     path('', views.custom_main, name='homepage'),
     path('profile/', views.profile_page, name='profile'),
     path('purchase/', views.purchase_page, name='purchase'),
+    path('read/', views.read_page, name='read'),
     path('books/', views.BookListView.as_view(), name='books'),
     path('authors/', views.AuthorListView.as_view(), name='authors'),
     path('genres/', views.GenreListView.as_view(), name='genres'),
@@ -24,4 +25,5 @@ urlpatterns = [
     path('rest/weather/', views.weather_rest),
     # auth
     path('accounts/', include('django.contrib.auth.urls')),
+    path('register/', views.register, name='register'),
 ]
