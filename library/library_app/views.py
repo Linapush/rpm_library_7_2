@@ -29,7 +29,7 @@ def register(request):
         context={
             'form': RegistrationForm(),
             'form_errors': form_errors,
-        }
+        },
     )
 
 
@@ -82,6 +82,7 @@ def purchase_page(request):
     )
 
 
+@transaction.atomic
 @auth_decorators.login_required
 def profile_page(request):
     user = request.user
@@ -90,20 +91,19 @@ def profile_page(request):
 
     if request.method == 'POST':
         form = AddFundsForm(request.POST)
-        
+
         if form.is_valid():
             funds_to_add = form.cleaned_data.get('money')
-            digits = len(str(client.money + funds_to_add)) - 1
-            if funds_to_add > 0 and digits <= config.DECIMAL_MAX_DIGITS:
-                with transaction.atomic():
-                    client.money += funds_to_add
+            if funds_to_add > 0:
+                client.money += funds_to_add
+                try:
                     client.save()
-                return HttpResponseRedirect(reverse('profile'))
-            form_errors.append(f'Amount field must be greater than zero and \
-                               the number of all digits must be less than {config.DECIMAL_MAX_DIGITS}')
+                except Exception as error:
+                    form_errors.append(str(error))
+                else:
+                    return HttpResponseRedirect(reverse('profile'))
         else:
             form_errors.extend(form.errors.get('money'))
-
     user_data = {
         'username': user.username,
         'first name': user.first_name,

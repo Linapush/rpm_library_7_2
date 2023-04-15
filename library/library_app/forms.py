@@ -1,5 +1,5 @@
 from django.forms import ChoiceField, Form, DecimalField, CharField, EmailField
-from .config import LOCATIONS_NAMES, DECIMAL_MAX_DIGITS, DECIMAL_PLACES, CF_DEFAULT
+from .config import LOCATIONS_NAMES, DECIMAL_MAX_DIGITS, DECIMAL_PLACES, CF_DEFAULT, EMAIL_LENGTH
 from django.contrib.auth import forms as auth_forms, models as auth_models
 
 
@@ -18,7 +18,7 @@ class AddFundsForm(Form):
 class RegistrationForm(auth_forms.UserCreationForm):
     first_name = CharField(max_length=CF_DEFAULT, required=True)
     last_name = CharField(max_length=CF_DEFAULT, required=True)
-    email = EmailField(max_length=128, required=True)
+    email = EmailField(max_length=EMAIL_LENGTH, required=True)
 
     class Meta:
         model = auth_models.User
