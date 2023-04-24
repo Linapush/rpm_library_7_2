@@ -33,20 +33,51 @@ def register(request):
     )
 
 
+class BookPage:
+    def __init__(self, current, num_pages, previous=None, next=None):
+        self.current = current
+        self.num_pages = num_pages
+        self.has_previous = bool(previous)
+        self.previous = previous
+        self.has_next = bool(next)
+        self.next = next
+
+
 @auth_decorators.login_required
 def read_page(request):
     context = {}
     client = Client.objects.get(user=request.user)
     book_id = request.GET.get('id')
     try:
-        context['book'] = Book.objects.get(id=book_id)
+        book = Book.objects.get(id=book_id)
     except Exception:
-        context['book'] = None
+        book = None
     try:
         context['user_access'] = bool(client.books.get(id=book_id))
     except Exception:
         context['user_access'] = False
 
+    if book:
+        context['book'] = book
+        
+        try:
+            page = int(request.GET.get('page', '1'))
+        except:
+            page = 1
+        with open(f'static/books/{book.path}.txt', 'r') as file:
+            lines = file.readlines()
+        num_lines = len(lines)
+        start = (page - 1) * config.BOOK_PAGINATION_LINES
+        end = page * config.BOOK_PAGINATION_LINES
+        end = end if end < num_lines else num_lines - 1
+        context['text'] = '\n'.join(lines[start:end])
+        num_pages = num_lines//config.BOOK_PAGINATION_LINES + 1
+        context['page'] = BookPage(
+            current=page,
+            num_pages=num_pages,
+            previous=page - 1 if page > 1 else None,
+            next = page + 1 if page < num_pages else None,
+        )
     return render(
         request,
         config.TEMPLATE_READ,

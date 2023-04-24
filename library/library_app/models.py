@@ -73,6 +73,7 @@ class Book(UUIDMixin, CreatedMixin, ModifiedMixin):
     type = models.CharField(_('type'), max_length=config.CF_DEFAULT, choices=book_types, blank=False, null=False)
     authors = models.ManyToManyField(Author, verbose_name=_('authors'), through='BookAuthor')
     genres = models.ManyToManyField('Genre', verbose_name=_('genres'), through='BookGenre')
+    path = models.CharField(_('path'), max_length=config.CF_DEFAULT, default='')
     price = models.DecimalField(
         verbose_name=_('price'),
         max_digits=config.DECIMAL_MAX_DIGITS,

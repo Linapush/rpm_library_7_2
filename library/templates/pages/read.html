@@ -2,16 +2,36 @@
 
 {% block content %}
     {% if book %}
-        <h1>{{ book.title }}</h1>
+        <h2>{{ book.title }}</h2>
+        <h3> Description: {{ book.description }}</h3>
         {% if user_access %}
-            <h2>Description: {{ book.description }}</h2>
+            {{ text }}
         {% else %}
             <h2>
                 You do not have access to this book yet. 
                 You can <a href="{% url 'purchase' %}?id={{book.id}}">buy it.</a>
             </h2>
         {% endif %}
+        {% if page %}
+        <div class="pagination">
+            <span class="step-links">
+    
+                {% if page.has_previous %}   <!-- будем считать, что передаем сюда объект page -->
+                    <a href="?page=1%id={{book.id}}">&laquo;first</a>
+                    <a href="?page={{page.previous}}&id={{book.id}}">previous</a>
+                {% endif %}
+    
+                <span class="current"> Page {{page.current}} of {{page.num_pages}}.</span>
+    
+                {% if page.has_next %}   <!-- будем считать, что передаем сюда объект page -->
+                    <a href="?page={{page.next}}&id={{book.id}}">next</a>
+                    <a href="?page={{page.num_pages}}&id={{book.id}}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
     {% else %}
       <p>Book not found..</p>
     {% endif %}
+
 {% endblock %}

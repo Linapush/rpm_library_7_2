@@ -4,6 +4,7 @@ from os import getenv
 load_dotenv()
 
 PAGINATOR_THRESHOLD = 20
+BOOK_PAGINATION_LINES = 40
 TEMPLATE_WEATHER = 'pages/weather.html'
 TEMPLATE_PROFILE = 'pages/profile.html'
 TEMPLATE_PURCHASE = 'pages/purchase.html'
