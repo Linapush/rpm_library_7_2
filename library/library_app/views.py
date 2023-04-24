@@ -12,6 +12,7 @@ from django.contrib.auth import mixins, decorators as auth_decorators
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from os import listdir
 
 
 def register(request):
@@ -34,13 +35,13 @@ def register(request):
 
 
 class BookPage:
-    def __init__(self, current, num_pages, previous=None, next=None):
+    def __init__(self, current, num_pages, previous=None, next_page=None):
         self.current = current
         self.num_pages = num_pages
         self.has_previous = bool(previous)
         self.previous = previous
-        self.has_next = bool(next)
-        self.next = next
+        self.has_next = bool(next_page)
+        self.next = next_page
 
 
 @auth_decorators.login_required
@@ -59,19 +60,19 @@ def read_page(request):
 
     if book:
         context['book'] = book
-        
         try:
             page = int(request.GET.get('page', '1'))
-        except:
+        except Exception:
             page = 1
-        with open(f'static/books/{book.path}/{page}.txt', 'r') as file:
-            context['text'] = file.read()
-        num_pages = 401
+        book_dir = f'static/books/{book.path}'
+        with open(f'{book_dir}/{page}.txt', 'r') as page_file:
+            context['text'] = page_file.read()
+        num_pages = len(listdir(book_dir)) - 2
         context['page'] = BookPage(
             current=page,
             num_pages=num_pages,
             previous=page - 1 if page > 1 else None,
-            next = page + 1 if page < num_pages else None,
+            next_page=page + 1 if page < num_pages else None,
         )
     return render(
         request,
