@@ -64,14 +64,9 @@ def read_page(request):
             page = int(request.GET.get('page', '1'))
         except:
             page = 1
-        with open(f'static/books/{book.path}.txt', 'r') as file:
-            lines = file.readlines()
-        num_lines = len(lines)
-        start = (page - 1) * config.BOOK_PAGINATION_LINES
-        end = page * config.BOOK_PAGINATION_LINES
-        end = end if end < num_lines else num_lines - 1
-        context['text'] = '\n'.join(lines[start:end])
-        num_pages = num_lines//config.BOOK_PAGINATION_LINES + 1
+        with open(f'static/books/{book.path}/{page}.txt', 'r') as file:
+            context['text'] = file.read()
+        num_pages = 401
         context['page'] = BookPage(
             current=page,
             num_pages=num_pages,

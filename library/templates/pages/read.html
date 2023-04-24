@@ -17,7 +17,7 @@
             <span class="step-links">
     
                 {% if page.has_previous %}   <!-- будем считать, что передаем сюда объект page -->
-                    <a href="?page=1%id={{book.id}}">&laquo;first</a>
+                    <a href="?page=1&id={{book.id}}">&laquo;first</a>
                     <a href="?page={{page.previous}}&id={{book.id}}">previous</a>
                 {% endif %}
     
